@@ -13,13 +13,23 @@ from competition import submitFlag, getCompetition, getTeamsFromCompetition
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+statistics = {}
+def addStatistic(script, statistic):
+    global statistics
+
+    if not statistic in statistics:
+        statistics[statistic] = {}
+
+    if not script in statistics[statistic]:
+        statistics[statistic][script] = 0
+
+    statistics[statistic][script] += 1
+
 # As sending flags is done over a single connection right now, we'll buffer them first to prevent them being a bottleneck.
-# TODO: we want to also monitor that this itself isn't bottlenecking seriously or we could be missing flags (some type of statistics?)
 flagQueue = []
 seen = {}
-statistics = {}
 def flagSubmitter():
-    global flagQueue, seen, statistics
+    global flagQueue, seen
 
     while True:
         if len(flagQueue) < 1:
@@ -41,33 +51,24 @@ def flagSubmitter():
         result = submitFlag(flag)
         log.info('Flag %s: %s' % (flag, result))
         
-        if not result in statistics:
-            statistics[result] = {}
+        addStatistic(script, result)
 
-        if not script in statistics[result]:
-            statistics[result][script] = 0
-
-        statistics[result][script] += 1
-
-sem = asyncio.Semaphore(concurrent_scripts)
+semaphores = {}
 async def runScript(script, team_id, competition):
-    global sem, statistics
+    global semaphores, statistics
 
-    async with sem: # TODO: the semaphore should be instead per-script - we don't want single slow exploit to bottleneck everything else
+    if not script in semaphores:
+        semaphores[script] = asyncio.Semaphore(concurrent_teams_per_script)
+
+    sem = semaphores[script]
+    async with sem:
         try:
             process = await asyncio.create_subprocess_exec(
                 *[script, str(team_id), json.dumps(competition)],
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         except Exception as e:
             log.warn('Ran script "%s" for team_id %s, though it failed to spawn:\n%s' % (script, team_id, e))
-
-            if not 'FAULTY_SCRIPT' in statistics:
-                statistics['FAULTY_SCRIPT'] = {}
-
-            if not script in statistics['FAULTY_SCRIPT']:
-                statistics['FAULTY_SCRIPT'][script] = 0
-
-            statistics['FAULTY_SCRIPT'][script] += 1
+            addStatistic(script, 'FAULTY_SCRIPT')
 
             return ''
         
@@ -122,7 +123,7 @@ def exploitRunnerWrapper(loop):
     loop.run_until_complete(exploitRunner())
 
 def printStatistics():
-    global statistics
+    global flagQueue
 
     while True:
         time.sleep(statistics_delay)
@@ -156,6 +157,7 @@ def printStatistics():
 
         print('========================================================')
         print(tabulate(data, headers=headers))
+        print('Flag buffer length: %d' % len(flagQueue))
         print('========================================================')
 
 def main():
