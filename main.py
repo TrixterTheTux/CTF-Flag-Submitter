@@ -9,6 +9,8 @@ from pwn import *
 from config import *
 from competition import submitFlag, getCompetition, getTeamsFromCompetition
 
+competition_data_path = '/tmp/competition.json'
+
 # Fix CTRL+C
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -54,7 +56,7 @@ def flagSubmitter():
         addStatistic(script, result)
 
 semaphores = {}
-async def runScript(script, team_id, competition):
+async def runScript(script, team_id):
     global semaphores, statistics
 
     if not script in semaphores:
@@ -64,7 +66,7 @@ async def runScript(script, team_id, competition):
     async with sem:
         try:
             process = await asyncio.create_subprocess_exec(
-                *[script, str(team_id), json.dumps(competition)],
+                *[script, str(team_id), competition_data_path],
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         except Exception as e:
             log.warn('Ran script "%s" for team_id %s, though it failed to spawn:\n%s' % (script, team_id, e))
@@ -78,8 +80,8 @@ async def runScript(script, team_id, competition):
 
         return stdout.decode().strip()
 
-async def handleScript(script, team_id, competition):
-    stdout = await runScript(script, team_id, competition)
+async def handleScript(script, team_id):
+    stdout = await runScript(script, team_id)
 
     for flag in stdout.split('\n'):
         flagQueue.append((flag, script))
@@ -99,12 +101,15 @@ async def exploitRunner():
                 time.sleep(5)
                 continue
 
+        with open(competition_data_path, 'w') as fout:
+            fout.write(json.dumps(competition))
+
         log.info('Running exploits...')
         tasks = []
         for script in glob.glob('./scripts/*'):
             log.debug('Handling script "%s"...' % script)
             for team_id in teams:
-                tasks.append(handleScript(script, team_id, competition))
+                tasks.append(handleScript(script, team_id))
         await asyncio.gather(*tasks)
 
         end = time.time() - start

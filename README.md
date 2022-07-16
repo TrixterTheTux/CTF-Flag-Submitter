@@ -21,7 +21,8 @@ import string
 import random
 
 team_id = sys.argv[1]
-competition = json.loads(sys.argv[2])
+with open(sys.argv[2], 'r') as fin:
+    competition = json.loads(fin.read())
 
 time.sleep(2)
 
