@@ -36,7 +36,7 @@ class WebServer(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         self.wfile.write(json.dumps({ # https://6.enowars.com/setup
-            'availableTeams': ['10.1.%d.1' % i for i in range(100)],
+            'availableTeams': ['10.1.%d.1' % i for i in range(5)],
             'services': {},
         }).encode())
 

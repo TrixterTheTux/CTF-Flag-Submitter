@@ -80,13 +80,20 @@ async def runScript(script, team_id):
 
         return stdout.decode().strip()
 
+tasksPool = {}
 async def handleScript(script, team_id):
+    global tasksPool
+
     stdout = await runScript(script, team_id)
 
     for flag in stdout.split('\n'):
         flagQueue.append((flag, script))
 
-async def exploitRunner():
+    del tasksPool[script][team_id]
+
+async def exploitRunner(loop):
+    global tasksPool
+
     while True:
         start = time.time()
 
@@ -105,12 +112,18 @@ async def exploitRunner():
             fout.write(json.dumps(competition))
 
         log.info('Running exploits...')
-        tasks = []
         for script in glob.glob('./scripts/*'):
+            if not script in tasksPool:
+                tasksPool[script] = {}
+
+            if len(tasksPool[script].keys()) > 0:
+                log.warn('The script %s still has queued teams, either too slow or hanging, skipping...' % script)
+                continue
+
             log.debug('Handling script "%s"...' % script)
             for team_id in teams:
-                tasks.append(handleScript(script, team_id))
-        await asyncio.gather(*tasks)
+                tasksPool[script][team_id] = True
+                loop.create_task(handleScript(script, team_id))
 
         end = time.time() - start
         diff = round(round_duration - end)
@@ -120,12 +133,12 @@ async def exploitRunner():
             log.info('Finished running exploits, though we are running behind by %d seconds.' % abs(diff))
             continue
 
-        log.info('Finished running exploits, repeating in %d seconds.' % diff)
-        time.sleep(diff)
+        log.info('Started running exploits, repeating in %d seconds.' % diff)
+        await asyncio.sleep(diff)
 
 def exploitRunnerWrapper(loop):
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(exploitRunner())
+    loop.run_until_complete(exploitRunner(loop))
 
 def printStatistics():
     global flagQueue
@@ -171,7 +184,8 @@ def main():
     # Fix child watcher not having a loop attached
     # https://stackoverflow.com/a/44698923
     assert threading.current_thread() is threading.main_thread()
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     asyncio.get_child_watcher()
 
     threading.Thread(target=exploitRunnerWrapper, args=[loop]).start()
