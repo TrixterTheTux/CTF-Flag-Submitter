@@ -6,7 +6,7 @@ You can find a generic config file in `config.py`, you'll also have to modify `c
 
 ## Adding exploit scripts
 
-The flag submitter handles concurrency and the flag submission, all that is needed is to place your exploit script in the `scripts/` folder with the appropriate shebang line, and it'll be executed automatically in the format of `./script [team_id] [json-encoded competition data]`. The script should print flags to stdout separated by a newline which will then be automatically submitted if the output hasn't ever been seen before and matches the flag format.
+The flag submitter handles concurrency and the flag submission, all that is needed is to place your exploit script in the `scripts/` folder with the appropriate shebang line, and it'll be executed automatically in the format of `./script [team_id] [path to a file with json-encoded competition data]`. The script should print flags to stdout separated by a newline which will then be automatically submitted if the output hasn't ever been seen before and matches the flag format.
 
 Note that you don't need to ever restart the flag submitter process, the scripts will be automatically detected.
 

@@ -42,7 +42,7 @@ def flagSubmitter():
         flagQueue = flagQueue[1:]
 
         if not re.match(flag_format, flag):
-            log.debug('Received invalid flag "%s", discarding...' % flag)
+            log.warn('Received invalid flag "%s", discarding...' % flag)
             continue
 
         if flag in seen:
