@@ -7,7 +7,7 @@ import json
 from tabulate import tabulate
 from pwn import *
 from config import *
-from competition import submitFlag, getCompetition, getTeamsFromCompetition
+from competition import submitFlag, submitFlags, getCompetition, getTeamsFromCompetition
 
 competition_data_path = '/tmp/competition.json'
 
@@ -28,7 +28,7 @@ def addStatistic(script, statistic):
     statistics[statistic][script] += 1
 
 # As sending flags is done over a single connection right now, we'll buffer them first to prevent them being a bottleneck.
-flagQueue = []
+flagQueue = [] # TODO: flag queue could have a lot of duplicates etc. if the buffer is full
 seen = {}
 def flagSubmitter():
     global flagQueue, seen
@@ -36,6 +36,12 @@ def flagSubmitter():
     while True:
         if len(flagQueue) < 1:
             time.sleep(1)
+            continue
+
+        # TODO: this was implemented lazily, do some checks on our end first on what flags are valid
+        if send_flags_in_bulk:
+            submitFlags(flagQueue.copy())
+            flagQueue = []
             continue
 
         flag, script = flagQueue[0]

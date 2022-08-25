@@ -6,6 +6,7 @@ conn = remote('127.0.0.1', 1337)
 conn.recvline()
 conn.recvline()
 
+# submitFlag is used only if send_flags_in_bulk is set to False
 def submitFlag(flag):
     try:
         conn.send(flag.encode() + b'\n')
@@ -17,6 +18,10 @@ def submitFlag(flag):
         # TODO: some sort of retry mechanism?
         log.warn('Received EOF when trying to submit a flag, assuming the submission server is dead. Exiting...')
         os._exit(1)
+
+# submitFlags is used only if send_flags_in_bulk is set to True
+def submitFlags(flags):
+    pass
 
 def getCompetition():
     response = requests.get('http://127.0.0.1:1338/scoreboard/attack.json', timeout = 5)

@@ -9,3 +9,6 @@ concurrent_teams_per_script = 20
 
 # How often should flag submission statistics be printed in seconds
 statistics_delay = 60
+
+# Set to true to pass all flags at once to
+send_flags_in_bulk = False
