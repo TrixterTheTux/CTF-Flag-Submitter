@@ -40,15 +40,27 @@ def flagSubmitter():
 
         # TODO: this was implemented lazily, do some checks on our end first on what flags are valid
         if send_flags_in_bulk:
-            flags = flagQueue.copy()
+            queueCopy = flagQueue.copy()
             flagQueue = []
+
+            flags = []
+            scriptLookup = {}
+            for flag, script in queueCopy:
+                if flag in seen:
+                    continue
+                seen[flag] = True
+
+                flags.append(flag)
+                scriptLookup[flag] = script
             
             flag_results = submitFlags(flags)
-            for flag_result in flag_results:
-                flag, result = flag_result
+            for flag, result in flag_results:
                 log.info('Flag %s: %s' % (flag, result))
 
-                addStatistic(script, result)
+                if flag in scriptLookup:
+                    addStatistic(scriptLookup[flag], result)
+                else:
+                    log.warn('Flag %s is without a script reference, leaving untracked...' % flag)
 
             continue
 
