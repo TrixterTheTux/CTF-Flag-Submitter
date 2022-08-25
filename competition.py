@@ -20,6 +20,7 @@ def submitFlag(flag):
         os._exit(1)
 
 # submitFlags is used only if send_flags_in_bulk is set to True
+# should return an array in format of [(flag, result), (flag, result), (flag, result), ...]
 def submitFlags(flags):
     pass
 

@@ -40,8 +40,16 @@ def flagSubmitter():
 
         # TODO: this was implemented lazily, do some checks on our end first on what flags are valid
         if send_flags_in_bulk:
-            submitFlags(flagQueue.copy())
+            flags = flagQueue.copy()
             flagQueue = []
+            
+            flag_results = submitFlags(flags)
+            for flag_result in flag_results:
+                flag, result = flag_result
+                log.info('Flag %s: %s' % (flag, result))
+
+                addStatistic(script, result)
+
             continue
 
         flag, script = flagQueue[0]
