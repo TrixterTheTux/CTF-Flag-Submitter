@@ -36,3 +36,9 @@ You can install the project's dependencies with `pip3 install -r requirements.tx
 In some cases the project can exit, for example if the submission server was down. Due to this, it may make sense to set this up as a systemd service instead or monitor it actively that it still works.
 
 To enable debug mode, you can have the magic `DEBUG` argument in argv.
+
+## Ideas for the future
+
+- When an exploit gets uploaded, it should be ran every `[max ticks - 1]` so that it minimizes the chance of getting caught, speeding up over time to combat the exploit getting found out and being patched
+- Ability to easily dump /tmp/competition.json (i.e. dry run mode that does not target any teams) so that it can be locally tested. Possibly ability to specify specific script and team to target?
+- Scripts should eventually get killed to prevent people being able to trigger timeouts => specific script never getting reran

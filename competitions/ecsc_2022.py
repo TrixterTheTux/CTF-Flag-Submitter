@@ -12,13 +12,16 @@ flag_format = 'ECSC_[A-Za-z0-9\+/]{32}'
 
 # Round duration in seconds
 # Alternatively, this can be higher to reduce the amount of times exploits get ran (=> less chance of getting caught/noticed)
-round_duration = 120
+round_duration = 120 # TBD
 
 # How many teams should be targeted at once per script
-concurrent_teams_per_script = 10
+# the announced ratelimit is ~120 conn/s
+# ~1 req/s (estimate which we should enforce ourselves)/flag store, up to 2 flag stores per service, in 5-7 services
+# => ~14 req/s/team
+concurrent_teams_per_script = 8 # ~14 req/s * 8 teams => 112 req/s
 
 # How often should flag submission statistics be printed in seconds
-statistics_delay = 60
+statistics_delay = 30
 
 # Set to true to submit all flags in once - depends on the competition if this is usually supported
 send_flags_in_bulk = False
