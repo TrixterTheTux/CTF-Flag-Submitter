@@ -25,8 +25,10 @@ send_flags_in_bulk = False
 
 ### CONFIG
 
+our_team_id = 9
 
 conn = remote('10.10.254.254', 31337)
+conn.recvline()
 conn.recvline()
 conn.recvline()
 
@@ -60,4 +62,4 @@ def getCompetition():
 
 # Get the list of all team IDs to trigger exploits on from the competition data
 def getTeamsFromCompetition(competition):
-    return competition['teams']
+    return list(filter(lambda team_id: team_id != our_team_id, competition['teams']))
