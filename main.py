@@ -62,12 +62,12 @@ def flagSubmitter():
             
             flag_results = competition.submitFlags(flags)
             for flag, result in flag_results:
-                log.info('Flag %s: %s' % (flag, result))
-
                 if flag in scriptLookup:
+                    log.info('Flag %s (%s): %s' % (flag, scriptLookup[flag], result))
+
                     addStatistic(scriptLookup[flag], result)
                 else:
-                    log.warn('Flag %s is without a script reference, leaving untracked...' % flag)
+                    log.warn('Flag %s (untracked???): %s' % (flag, result))
 
             continue
 
@@ -75,16 +75,16 @@ def flagSubmitter():
         flagQueue = flagQueue[1:]
 
         if not re.match(competition.flag_format, flag):
-            log.warn('Received invalid flag "%s", discarding...' % flag)
+            log.warn('Received invalid flag "%s" (%s), discarding...' % (flag, script))
             continue
 
         if flag in seen:
-            log.debug('Received already seen flag "%s", discarding...' % flag)
+            log.debug('Received already seen flag "%s" (%s), discarding...' % (flag, script))
             continue
         seen[flag] = True
 
         result = competition.submitFlag(flag)
-        log.info('Flag %s: %s' % (flag, result))
+        log.info('Flag %s (%s): %s' % (flag, script, result))
         
         addStatistic(script, result)
 
@@ -120,7 +120,7 @@ async def handleScript(script, team_id):
     stdout = await runScript(script, team_id)
 
     for flag in stdout.split('\n'):
-        flagQueue.append((flag, script))
+        flagQueue.append((flag, script.removeprefix('./scripts/')))
 
     del tasksPool[script][team_id]
 
@@ -190,7 +190,7 @@ def printStatistics():
 
         headers = ['SCRIPT'] + headers
         data = []
-        for script in glob.glob('./scripts/*'): # show only active scripts
+        for script in list(map(lambda x: x.removeprefix('./scripts/'), glob.glob('./scripts/*'))): # show only active scripts
             row = []
 
             for header in headers:

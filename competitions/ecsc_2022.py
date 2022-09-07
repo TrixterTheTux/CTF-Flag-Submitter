@@ -18,7 +18,7 @@ round_duration = 120
 concurrent_teams_per_script = 10
 
 # How often should flag submission statistics be printed in seconds
-statistics_delay = round_duration
+statistics_delay = 60
 
 # Set to true to submit all flags in once - depends on the competition if this is usually supported
 send_flags_in_bulk = False
