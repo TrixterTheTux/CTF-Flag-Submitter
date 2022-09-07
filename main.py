@@ -4,10 +4,17 @@ import time
 import re
 import glob
 import json
+import sys
+import os
 from tabulate import tabulate
 from pwn import *
-from config import *
-from competition import submitFlag, submitFlags, getCompetition, getTeamsFromCompetition
+
+if len(sys.argv) < 2:
+    print('Missing argument for the competition to load.')
+    os._exit(1)
+
+competition_file_name = sys.argv[1].replace('.', '') # this is not a CTF challenge pls
+competition = __import__('competitions.%s' % competition_file_name)
 
 competition_data_path = '/tmp/competition.json'
 
@@ -39,7 +46,7 @@ def flagSubmitter():
             continue
 
         # TODO: this was implemented lazily, do some checks on our end first on what flags are valid
-        if send_flags_in_bulk:
+        if competition.send_flags_in_bulk:
             queueCopy = flagQueue.copy()
             flagQueue = []
 
@@ -53,7 +60,7 @@ def flagSubmitter():
                 flags.append(flag)
                 scriptLookup[flag] = script
             
-            flag_results = submitFlags(flags)
+            flag_results = competition.submitFlags(flags)
             for flag, result in flag_results:
                 log.info('Flag %s: %s' % (flag, result))
 
@@ -67,7 +74,7 @@ def flagSubmitter():
         flag, script = flagQueue[0]
         flagQueue = flagQueue[1:]
 
-        if not re.match(flag_format, flag):
+        if not re.match(competition.flag_format, flag):
             log.warn('Received invalid flag "%s", discarding...' % flag)
             continue
 
@@ -76,7 +83,7 @@ def flagSubmitter():
             continue
         seen[flag] = True
 
-        result = submitFlag(flag)
+        result = competition.submitFlag(flag)
         log.info('Flag %s: %s' % (flag, result))
         
         addStatistic(script, result)
@@ -86,7 +93,7 @@ async def runScript(script, team_id):
     global semaphores, statistics
 
     if not script in semaphores:
-        semaphores[script] = asyncio.Semaphore(concurrent_teams_per_script)
+        semaphores[script] = asyncio.Semaphore(competition.concurrent_teams_per_script)
 
     sem = semaphores[script]
     async with sem:
@@ -126,8 +133,8 @@ async def exploitRunner(loop):
         log.info('Fetching competition data...')
         while True: # a bit ugly but this is required so that `start` is accurate
             try:
-                competition = getCompetition()
-                teams = getTeamsFromCompetition(competition)
+                competition_data = competition.getCompetition()
+                teams = competition.getTeamsFromCompetition(competition_data)
                 break
             except:
                 log.warn('Failed getting competition data, trying again in 5 seconds...')
@@ -135,7 +142,7 @@ async def exploitRunner(loop):
                 continue
 
         with open(competition_data_path, 'w') as fout:
-            fout.write(json.dumps(competition))
+            fout.write(json.dumps(competition_data))
 
         log.info('Running exploits...')
         for script in glob.glob('./scripts/*'):
@@ -152,7 +159,7 @@ async def exploitRunner(loop):
                 loop.create_task(handleScript(script, team_id))
 
         end = time.time() - start
-        diff = round(round_duration - end)
+        diff = round(competition.round_duration - end)
         if diff <= 0:
             # TODO: this should be considered more, e.g. it may make sense to run the exploits less often to reduce them getting logged (though patches will have bigger impact)
             # this also indicates that either the exploits are slow or concurrency values in the config may have to be increased
@@ -170,7 +177,7 @@ def printStatistics():
     global flagQueue
 
     while True:
-        time.sleep(statistics_delay)
+        time.sleep(competition.statistics_delay)
 
         if len(statistics.keys()) > 20:
             log.warn('Statistics seem to have too many unique keys (>20), possibly misconfigured flag output?')
