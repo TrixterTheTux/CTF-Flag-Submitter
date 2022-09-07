@@ -10,11 +10,11 @@ from tabulate import tabulate
 from pwn import *
 
 if len(sys.argv) < 2:
-    print('Missing argument for the competition to load.')
+    print('Usage: python3 ./main.py [competition name]')
     os._exit(1)
 
 competition_file_name = sys.argv[1].replace('.', '') # this is not a CTF challenge pls
-competition = __import__('competitions.%s' % competition_file_name)
+competition = getattr(__import__('competitions.%s' % competition_file_name), competition_file_name)
 
 competition_data_path = '/tmp/competition.json'
 

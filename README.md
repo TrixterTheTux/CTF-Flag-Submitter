@@ -31,7 +31,7 @@ print('TEST_' + ''.join(random.choice(string.ascii_letters) for i in range(32)))
 
 ## Running the project
 
-You can install the project's dependencies with `pip3 -r requirements.txt`. Then, to start up the project all you need to run is `python3 ./main.py [competition name]`.
+You can install the project's dependencies with `pip3 install -r requirements.txt`. Then, to start up the project all you need to run is `python3 ./main.py [competition name]`.
 
 In some cases the project can exit, for example if the submission server was down. Due to this, it may make sense to set this up as a systemd service instead or monitor it actively that it still works.
 
