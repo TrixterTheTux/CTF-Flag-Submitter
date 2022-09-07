@@ -8,7 +8,7 @@ from pwn import *
 name = 'ECSC 2022 (dry-run)'
 
 # Flag validation regex
-flag_format = 'ECSC_[A-Za-z0-9\+/]{32'
+flag_format = 'ECSC_[A-Za-z0-9\+/]{32}'
 
 # Round duration in seconds
 # Alternatively, this can be higher to reduce the amount of times exploits get ran (=> less chance of getting caught/noticed)
