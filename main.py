@@ -4,16 +4,16 @@ import time
 import re
 import glob
 import json
-import sys
-import os
+import argparse
 from tabulate import tabulate
 from pwn import *
 
-if len(sys.argv) < 2:
-    print('Usage: python3 ./main.py [competition name]')
-    os._exit(1)
+parser = argparse.ArgumentParser()
+parser.add_argument('competition', help='Competition file name')
+parser.add_argument('--dry-run', action='store_true')
+options = parser.parse_args()
 
-competition_file_name = sys.argv[1].replace('.', '') # this is not a CTF challenge pls
+competition_file_name = options.competition.replace('.', '') # this is not a CTF challenge pls
 competition = getattr(__import__('competitions.%s' % competition_file_name), competition_file_name)
 
 competition_data_path = '/tmp/competition.json'
@@ -161,29 +161,32 @@ async def exploitRunner(loop):
         with open(competition_data_path, 'w') as fout:
             fout.write(json.dumps(competition_data))
 
-        log.info('Running exploits...')
-        for script in glob.glob('./scripts/*'):
-            if not script in tasksPool:
-                tasksPool[script] = {}
+        if options.dry_run:
+            log.info('Running in dry-run mode, skipping running exploits...')
+        else:
+            log.info('Running exploits...')
+            for script in glob.glob('./scripts/*'):
+                if not script in tasksPool:
+                    tasksPool[script] = {}
 
-            log.debug('Handling script "%s"...' % script)
-            for team_id in teams:
-                if team_id in tasksPool[script]: # redundant? with properly configured script_timeout this should never be hit
-                    log.warn('The script "%s" is still running for team_id %s, either too slow or hanging, skipping...' % (script, team_id))
-                    continue
+                log.debug('Handling script "%s"...' % script)
+                for team_id in teams:
+                    if team_id in tasksPool[script]: # redundant? with properly configured script_timeout this should never be hit
+                        log.warn('The script "%s" is still running for team_id %s, either too slow or hanging, skipping...' % (script, team_id))
+                        continue
 
-                tasksPool[script][team_id] = True
-                loop.create_task(handleScript(script, team_id))
+                    tasksPool[script][team_id] = True
+                    loop.create_task(handleScript(script, team_id))
 
         end = time.time() - start
         diff = round(competition.round_duration - end)
         if diff <= 0: # redundant? should never be hit unless process spawning is broke?
             # TODO: this should be considered more, e.g. it may make sense to run the exploits less often to reduce them getting logged (though patches will have bigger impact)
             # this also indicates that either the exploits are slow or concurrency values in the config may have to be increased
-            log.info('Finished running exploits, though we are running behind by %d seconds.' % abs(diff))
+            log.info('Exploits triggered, though we are running behind by %d seconds.' % abs(diff))
             continue
 
-        log.info('Started running exploits, repeating in %d seconds.' % diff)
+        log.info('Exploits triggered, repeating in %d seconds.' % diff)
         await asyncio.sleep(diff)
 
 def exploitRunnerWrapper(loop):
