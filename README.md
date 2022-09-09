@@ -6,7 +6,7 @@ You can find an example competition file in `competitions/mock.py`, which you ca
 
 ## Adding exploit scripts
 
-The flag submitter handles concurrency and the flag submission, all that is needed is to place your exploit script in the `scripts/` folder with the appropriate shebang line, and it'll be executed automatically in the format of `./script [team_id] [path to a file with json-encoded competition data]`. The script should print flags to stdout separated by a newline which will then be automatically submitted if the output hasn't ever been seen before and matches the flag format.
+The flag submitter handles concurrency and the flag submission, all that is needed is to place your exploit script in the `scripts/` folder with the appropriate shebang line, and it'll be executed automatically in the format of `./script [team_id] [path to a file with json-encoded competition data, default /tmp/competition.json]`. The script should print flags to stdout separated by a newline which will then be automatically submitted if the output hasn't ever been seen before and matches the flag format.
 
 Note that you don't need to ever restart the flag submitter process (unless the submission server dies), the scripts will be automatically detected.
 
@@ -37,7 +37,9 @@ In some cases the project can exit, for example if the submission server was dow
 
 To enable debug mode, you can have the magic `DEBUG` argument in argv.
 
+For exploit development, you may want to use `--dry-run` flag and let this run in the background. It'll automatically keep up to date the `/tmp/competition.json` file so you don't need to hardcode any values each time they change, and ignore running the actual exploit scripts. 
+
 ## Ideas for the future
 
 - When an exploit gets uploaded, it should be ran every `[max ticks - 1]` so that it minimizes the chance of getting caught, speeding up over time to combat the exploit getting found out and being patched
-- Ability to easily dump /tmp/competition.json (i.e. dry run mode that does not target any teams) so that it can be locally tested. Possibly ability to specify specific script and team to target?
+- Ability to specify specific script and team to target?
