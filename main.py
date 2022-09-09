@@ -105,9 +105,21 @@ async def runScript(script, team_id):
             log.warn('Ran script "%s" for team_id %s, though it failed to spawn:\n%s' % (script, team_id, e))
             addStatistic(script, 'FAULTY_SCRIPT')
 
-            return ''
+            return
         
-        stdout, stderr = await process.communicate()
+        try:
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=competition.script_timeout)
+        except asyncio.exceptions.TimeoutError:
+            log.warn('Ran script "%s" for team_id %s, though it has been doing something for too long (>%d seconds), killing...' % (script, team_id, competition.script_timeout))
+
+            try:
+                process.kill()
+            except OSError: # no such process
+                pass
+
+            # TODO: attempt to recover stdout and stderr instead? (too much effort though, as it'll rarely will yield any flags)
+            return
+
         if stderr != b'':
             log.warn('Ran script "%s" for team_id %s, though it returned data in stderr:\n%s' % (script, team_id, stderr.decode().strip()))
 
@@ -118,11 +130,16 @@ async def handleScript(script, team_id):
     global tasksPool
 
     stdout = await runScript(script, team_id)
+    del tasksPool[script][team_id]
+
+    if stdout is None:
+        return
 
     for flag in stdout.split('\n'):
-        flagQueue.append((flag, script.removeprefix('./scripts/')))
+        if flag == '':
+            continue
 
-    del tasksPool[script][team_id]
+        flagQueue.append((flag, script.removeprefix('./scripts/')))
 
 async def exploitRunner(loop):
     global tasksPool
@@ -149,18 +166,18 @@ async def exploitRunner(loop):
             if not script in tasksPool:
                 tasksPool[script] = {}
 
-            if len(tasksPool[script].keys()) > 0:
-                log.warn('The script %s still has queued teams, either too slow or hanging, skipping...' % script)
-                continue
-
             log.debug('Handling script "%s"...' % script)
             for team_id in teams:
+                if team_id in tasksPool[script]: # redundant? with properly configured script_timeout this should never be hit
+                    log.warn('The script "%s" is still running for team_id %s, either too slow or hanging, skipping...' % (script, team_id))
+                    continue
+
                 tasksPool[script][team_id] = True
                 loop.create_task(handleScript(script, team_id))
 
         end = time.time() - start
         diff = round(competition.round_duration - end)
-        if diff <= 0:
+        if diff <= 0: # redundant? should never be hit unless process spawning is broke?
             # TODO: this should be considered more, e.g. it may make sense to run the exploits less often to reduce them getting logged (though patches will have bigger impact)
             # this also indicates that either the exploits are slow or concurrency values in the config may have to be increased
             log.info('Finished running exploits, though we are running behind by %d seconds.' % abs(diff))
@@ -212,7 +229,7 @@ def printStatistics():
         print('========================================================')
 
 def main():
-    log.info('Hello world!')
+    log.info('Hello world! Using the competition config "%s"...' % competition.name)
 
     # Fix child watcher not having a loop attached
     # https://stackoverflow.com/a/44698923

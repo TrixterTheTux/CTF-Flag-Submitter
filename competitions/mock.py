@@ -17,6 +17,10 @@ round_duration = 60
 # How many teams should be targeted at once per script
 concurrent_teams_per_script = 20
 
+# How long should a single script be allowed to run for, in seconds.
+# This aims to eliminate possible meta-gaming strategies (or services being down) and the script itself not handling e.g. request timeouts, causing all other teams' flags not to be exploited.
+script_timeout = 5
+
 # How often should flag submission statistics be printed in seconds
 statistics_delay = 60
 

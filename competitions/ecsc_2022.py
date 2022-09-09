@@ -5,7 +5,7 @@ from pwn import *
 ### CONFIG
 
 # Competition name
-name = 'ECSC 2022 (dry-run)'
+name = 'ECSC 2022'
 
 # Flag validation regex
 flag_format = 'ECSC_[A-Za-z0-9\+/]{32}'
@@ -18,7 +18,17 @@ round_duration = 120 # TBD
 # the announced ratelimit is ~120 conn/s
 # ~1 req/s (estimate which we should enforce ourselves)/flag store, up to 2 flag stores per service, in 5-7 services
 # => ~14 req/s/team
+# TODO: if script instantly finishes in one request, we end up doing more than 1 req/s (but is this relevant considering we'd need to exploit everything to be close to the ratelimit?)
 concurrent_teams_per_script = 8 # ~14 req/s * 8 teams => 112 req/s
+
+# How long should a single script be allowed to run for, in seconds.
+# This aims to eliminate possible meta-gaming strategies (or services being down) and the script itself not handling e.g. request timeouts, causing all other teams' flags not to be exploited.
+# ~5 active flags per script, ~3 requests to get one flag, 1 req/s
+# => 15s/script (+ random overhead)
+# if service is down, ~5s timeout per ~5 active flags per script (assuming single flag attempt does not fail the script early by design)
+# => 25s/script (+ random overhead)
+# TODO: consider this more - maybe we should up concurrent_teams_per_script to 10 for compensating scenarios where we *could* be falling behind (is this reasonably possible unless done specifically by multiple teams?) due to concurrently having less active scripts
+script_timeout = 45
 
 # How often should flag submission statistics be printed in seconds
 statistics_delay = 30
