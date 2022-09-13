@@ -12,7 +12,7 @@ flag_format = 'ECSC_[A-Za-z0-9\+/]{32}'
 
 # Round duration in seconds
 # Alternatively, this can be higher to reduce the amount of times exploits get ran (=> less chance of getting caught/noticed)
-round_duration = 120 # TBD
+round_duration = 180
 
 # How many teams should be targeted at once per script
 # the announced ratelimit is ~120 conn/s
