@@ -21,7 +21,7 @@ def submissions():
 
             while True:
                 flag = l.recvline()
-                if random.randint(0, 100) < 25:
+                if random.randint(0, 100) < 5:
                     l.sendline(flag.decode().strip().encode() + b' ERR')
                 else:
                     l.sendline(flag.decode().strip().encode() + b' OK')

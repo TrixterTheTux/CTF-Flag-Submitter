@@ -3,10 +3,10 @@ from submitter.flag_handler import SubmissionStatus
 
 # NOTE: This format is designed for kaos - most of these are not used in CTF-Flag-Submitter
 
-display_name = 'Mock Competition'
+display_name = 'Stub'
 
 # Regex that can be used to detect valid flags
-flag_format = 'TEST_[A-Za-z0-9\+/]{32}'
+flag_format = 'FLAG_[A-Za-z0-9\+/]{32}'
 
 # Round duration in seconds
 round_duration = 60
@@ -31,30 +31,21 @@ bulk_submit_supported = False
 bulk_chunk_size = 32
 
 def get_data():
-    # TODO: fetch this data from the mock HTTP server instead :D
     return {
-         'teams': {
-            '127.0.0.1': 'No place like home!',
-            '127.0.0.2': 'Target Practice',
+        'teams': {
+            'team_ip': 'Team Name',
         },
         'services': {
-            'service_1': {
-                'name': 'Service 1',
-                'flagstores': ['flagstore1', 'flagstore2'],
-            },
-            'service_2': {
-                'name': 'Service 2',
-            },
-            'service_3': {
-                'name': 'Service 3',
-                'flagstores': ['flagstore1'],
+            'service_id': {
+                'name': 'Service Name',
+                # Optional:
+                'flagstores': ['flagstore_id', 'flagstore_id'],
             },
         },
         'flag_ids': {
-            '127.0.0.2': {
-                'service_1': {
-                    'flagstore1': ['a'],
-                    'flagstore2': ['b'],
+            'team_ip': {
+                'service_id': {
+                    'flagstore_id': ['flag_id', 'flag_id'],
                 }
             }
         }
